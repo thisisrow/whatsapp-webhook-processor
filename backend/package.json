@@ -4,7 +4,8 @@
   "type": "commonjs",
   "scripts": {
     "dev": "node src/server.js",
-    "start": " node ./load_samples.js ./samples && node src/server.js"
+    "start": " node src/server.js",
+    "uplode":"node ./load_samples.js ./samples "
   },
   "dependencies": {
     "cors": "^2.8.5",
