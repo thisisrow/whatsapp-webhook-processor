@@ -18,4 +18,4 @@ function getDb() {
   return db;
 }
 
-module.exports = { connect, getDb, client: () => client };
+module.exports = { connect, getDb};

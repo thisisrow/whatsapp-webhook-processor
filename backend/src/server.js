@@ -6,7 +6,7 @@ const { MongoClient } = require("mongodb");
 const http = require("http");
 const { initSockets } = require("./sockets");
 const { processWebhookPayload } = require("./processor");
-const { connect: connectDb, getDb } = require("./db");
+const { connect: connectDb } = require("./db");
 
 const app = express();
 app.use(express.json({ limit: "1mb" }));

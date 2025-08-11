@@ -1,6 +1,4 @@
 // processor.js
-const { ObjectId } = require("mongodb");
-
 let didEnsureIndexes = false;
 async function ensureIndexes(col) {
   if (didEnsureIndexes) return;
