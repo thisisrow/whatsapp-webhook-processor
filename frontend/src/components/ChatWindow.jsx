@@ -13,6 +13,24 @@ export default function ChatWindow({ waId, contactName, messages, loading, onBac
 
   const displayName = contactName || nameFromMsgs || waId;
 
+  // Deduplicate messages by msgId
+  const uniqueMessages = useMemo(() => {
+    const seen = new Map();
+    return messages.reduce((acc, msg) => {
+      if (!seen.has(msg.msgId)) {
+        seen.set(msg.msgId, true);
+        acc.push(msg);
+      } else {
+        // If message exists, update it if the new one has more info
+        const existingIndex = acc.findIndex(m => m.msgId === msg.msgId);
+        if (existingIndex !== -1 && msg.currentStatus) {
+          acc[existingIndex] = msg;
+        }
+      }
+      return acc;
+    }, []);
+  }, [messages]);
+
   return (
     <div className="chat-window">
       <header className="chat-header">
@@ -26,7 +44,7 @@ export default function ChatWindow({ waId, contactName, messages, loading, onBac
 
       <div className="messages">
         {loading && <div className="loading">Loading…</div>}
-        {messages.map(m => (
+        {uniqueMessages.map(m => (
           <MessageBubble
             key={m.msgId}
             direction={m.direction}

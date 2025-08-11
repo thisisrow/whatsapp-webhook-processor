@@ -17,6 +17,26 @@ export async function fetchMessages(waId, limit = 200) {
 }
 
 export async function sendMessage(waId, text) {
-  const { data } = await api.post("/api/messages", { waId, text });
-  return data;
+  const tempMsgId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const socket = io(API_URL);
+  
+  // Notify socket about pending message
+  socket.emit('message:pending', tempMsgId);
+  
+  try {
+    const { data } = await api.post("/api/messages", { 
+      waId, 
+      text,
+      clientMsgId: tempMsgId 
+    });
+    
+    // Once server confirms, we can mark this message as received
+    socket.emit('message:received', tempMsgId);
+    return { ...data, msgId: tempMsgId };
+  } catch (error) {
+    socket.emit('message:received', tempMsgId); // Clean up on error
+    throw error;
+  } finally {
+    socket.disconnect();
+  }
 }
