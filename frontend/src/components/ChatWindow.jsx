@@ -1,35 +1,60 @@
-import React, { useMemo } from "react";
-import { format } from "date-fns";
+import React, { useEffect, useMemo, useRef } from "react";
+import { format, isToday, isYesterday } from "date-fns";
 import MessageBubble from "./MessageBubble";
 
-export default function ChatWindow({ waId, contactName, messages, loading, onBack, children }) {
-  const nameFromMsgs = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const n = messages[i]?.contactName;
-      if (n) return n;
+function labelForDay(d) {
+  if (isToday(d)) return "Today";
+  if (isYesterday(d)) return "Yesterday";
+  return format(d, "dd MMM yyyy");
+}
+
+function groupByDay(messages) {
+  const out = [];
+  let prevKey = "";
+  for (const m of messages) {
+    const t = m.timestamp ? new Date(m.timestamp) : new Date(m.createdAt || Date.now());
+    const key = format(t, "yyyy-MM-dd");
+    if (key !== prevKey) {
+      out.push({ _type: "divider", key, label: labelForDay(t) });
+      prevKey = key;
     }
-    return null;
-  }, [messages]);
+    out.push({ _type: "msg", ...m });
+  }
+  return out;
+}
 
-  const displayName = contactName || nameFromMsgs || waId;
+export default function ChatWindow({
+  waId,
+  contactName,
+  messages,
+  loading,
+  onBack,
+  children
+}) {
+  const displayName = useMemo(() => {
+    const fromMsgs = [...messages].reverse().find(m => m?.contactName)?.contactName;
+    return contactName || fromMsgs || waId;
+  }, [contactName, messages, waId]);
 
-  // Deduplicate messages by msgId
+  // Deduplicate messages by msgId (keep newest info)
   const uniqueMessages = useMemo(() => {
-    const seen = new Map();
-    return messages.reduce((acc, msg) => {
-      if (!seen.has(msg.msgId)) {
-        seen.set(msg.msgId, true);
-        acc.push(msg);
-      } else {
-        // If message exists, update it if the new one has more info
-        const existingIndex = acc.findIndex(m => m.msgId === msg.msgId);
-        if (existingIndex !== -1 && msg.currentStatus) {
-          acc[existingIndex] = msg;
-        }
-      }
-      return acc;
-    }, []);
+    const map = new Map();
+    for (const m of messages) map.set(m.msgId, { ...(map.get(m.msgId) || {}), ...m });
+    const arr = Array.from(map.values());
+    arr.sort((a, b) => new Date(a.timestamp || a.createdAt || 0) - new Date(b.timestamp || b.createdAt || 0));
+    return arr;
   }, [messages]);
+
+  const items = useMemo(() => groupByDay(uniqueMessages), [uniqueMessages]);
+
+  // Auto-scroll to bottom when new messages arrive (unless user scrolled up a lot)
+  const listRef = useRef(null);
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 160;
+    if (nearBottom) el.scrollTop = el.scrollHeight;
+  }, [items.length]);
 
   return (
     <div className="chat-window">
@@ -42,17 +67,23 @@ export default function ChatWindow({ waId, contactName, messages, loading, onBac
         </div>
       </header>
 
-      <div className="messages">
+      <div className="messages" ref={listRef}>
         {loading && <div className="loading">Loading…</div>}
-        {uniqueMessages.map(m => (
-          <MessageBubble
-            key={m.msgId}
-            direction={m.direction}
-            text={m.textBody}
-            timestamp={m.timestamp ? format(new Date(m.timestamp), "dd MMM yyyy, HH:mm") : ""}
-            status={m.currentStatus}
-          />
-        ))}
+        {items.map((it, i) =>
+          it._type === "divider" ? (
+            <div className="day-divider" key={`d-${it.key}-${i}`}>
+              <span>{it.label}</span>
+            </div>
+          ) : (
+            <MessageBubble
+              key={it.msgId}
+              direction={it.direction}
+              text={it.textBody}
+              timestamp={it.timestamp ? format(new Date(it.timestamp), "HH:mm") : ""}
+              status={it.currentStatus}
+            />
+          )
+        )}
       </div>
 
       <footer className="composer">{children}</footer>

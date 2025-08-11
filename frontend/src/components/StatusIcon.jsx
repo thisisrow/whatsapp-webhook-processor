@@ -1,14 +1,24 @@
 import React from "react";
 
-export default function StatusIcon({ status }) {
-  // simple checkmarks like WhatsApp
-  if (status === "read") {
-    return <span className="status status-read">✔✔</span>;
-  }
-  else if (status === "delivered") {
-    return <span className="status">✔✔</span>;
-  }
-   else  {
-    return <span className="status">✔</span>;
-  }
+/**
+ * WhatsApp-like ticks:
+ * - queued/sent -> single gray check
+ * - delivered   -> double gray checks
+ * - read        -> double blue checks
+ */
+export default function StatusIcon({ status, small, inline }) {
+  const deliveredLike = status === "delivered" || status === "read";
+  const classes = [
+    "status",
+    deliveredLike ? "double" : "single",
+    status,
+    small ? "small" : "",
+    inline ? "inline" : "",
+  ].join(" ").trim();
+
+  return (
+    <span className={classes} title={status || "sent"} aria-label={status || "sent"}>
+      {deliveredLike ? "✔✔" : "✔"}
+    </span>
+  );
 }
