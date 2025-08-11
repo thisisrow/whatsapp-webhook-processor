@@ -35,25 +35,31 @@ export async function fetchMessages(waId, limit = 200) {
   return data;
 }
 
-export async function sendMessage(waId, text) {
-  const tempMsgId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const currentSocket = getSocket();
+// export async function sendMessage(waId, text) {
+//   const tempMsgId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+//   const currentSocket = getSocket();
   
-  // Notify socket about pending message
-  currentSocket.emit('message:pending', tempMsgId);
+//   // Notify socket about pending message
+//   currentSocket.emit('message:pending', tempMsgId);
   
-  try {
-    const { data } = await api.post("/api/messages", { 
-      waId, 
-      text,
-      clientMsgId: tempMsgId 
-    });
+//   try {
+//     const { data } = await api.post("/api/messages", { 
+//       waId, 
+//       text,
+//       clientMsgId: tempMsgId 
+//     });
     
-    // Once server confirms, we can mark this message as received
-    currentSocket.emit('message:received', tempMsgId);
-    return { ...data, msgId: tempMsgId };
-  } catch (error) {
-    currentSocket.emit('message:received', tempMsgId); // Clean up on error
-    throw error;
-  }
+//     // Once server confirms, we can mark this message as received
+//     currentSocket.emit('message:received', tempMsgId);
+//     return { ...data, msgId: tempMsgId };
+//   } catch (error) {
+//     currentSocket.emit('message:received', tempMsgId); // Clean up on error
+//     throw error;
+//   }
+// }
+
+
+export async function sendMessage(waId, text) {
+  const { data } = await api.post("/api/messages", { waId, text });
+  return data; 
 }

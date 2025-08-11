@@ -70,8 +70,8 @@ async function emitChatSummary(waId, io) {
     ];
     const [summary] = await col.aggregate(pipeline).toArray();
     if (summary) {
-      console.log("Emitting chat summary:", summary.waId);
-      io.emit("chat_summary", summary);
+      // console.log("Emitting chat summary:", summary.waId);
+      // io.emit("chat_summary", summary);
     }
   } catch (e) {
     console.warn("emitChatSummary failed:", e.message);
