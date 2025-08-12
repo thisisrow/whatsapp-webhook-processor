@@ -1,5 +1,5 @@
-// processor.js
 let didEnsureIndexes = false;
+
 async function ensureIndexes(col) {
   if (didEnsureIndexes) return;
   await col.createIndex({ msgId: 1 }, { unique: true });
@@ -27,7 +27,6 @@ async function upsertMessages(col, value) {
     const direction = msg.from === businessNumber ? "outbound" : "inbound";
     const waId = waIdFromContact || (direction === "inbound" ? msg.from : undefined);
 
-    // Fields we ALWAYS want to have on the doc (even if a status created it earlier)
     const setFields = {
       metaMsgId: msg.id,
       direction,
@@ -44,7 +43,6 @@ async function upsertMessages(col, value) {
       updatedAt: new Date(),
     };
 
-    // Fields only on first insert (avoid conflicts; don't downgrade an existing status)
     const setOnInsertFields = {
       msgId: msg.id,
       createdAt: new Date(),
@@ -53,10 +51,7 @@ async function upsertMessages(col, value) {
 
     await col.updateOne(
       { msgId: msg.id },
-      {
-        $setOnInsert: setOnInsertFields,
-        $set: setFields,
-      },
+      { $setOnInsert: setOnInsertFields, $set: setFields },
       { upsert: true }
     );
   }
@@ -71,7 +66,7 @@ async function applyStatuses(col, value) {
     const msgKey = st.meta_msg_id || st.id;
 
     const statusItem = {
-      status: st.status,            // sent | delivered | read | etc.
+      status: st.status,
       timestamp: tsToDate(st.timestamp),
       recipientId: st.recipient_id,
       conversationId: st.conversation?.id || null,
@@ -81,7 +76,6 @@ async function applyStatuses(col, value) {
     await col.updateOne(
       { msgId: msgKey },
       {
-        // create a skeleton if status arrives before we saw the message
         $setOnInsert: {
           msgId: msgKey,
           direction: "outbound",
@@ -89,10 +83,7 @@ async function applyStatuses(col, value) {
           displayPhoneNumber: businessNumber,
           createdAt: new Date(),
         },
-        $set: {
-          currentStatus: st.status,
-          updatedAt: new Date(),
-        },
+        $set: { currentStatus: st.status, updatedAt: new Date() },
         $addToSet: { statusHistory: statusItem },
       },
       { upsert: true }
@@ -100,9 +91,6 @@ async function applyStatuses(col, value) {
   }
 }
 
-/**
- * Entry for any incoming WhatsApp webhook payload
- */
 async function processWebhookPayload(db, payload) {
   const col = db.collection("processed_messages");
   await ensureIndexes(col);
@@ -111,12 +99,8 @@ async function processWebhookPayload(db, payload) {
   for (const entry of entryArr) {
     for (const change of entry?.changes || []) {
       const value = change?.value || {};
-      if (Array.isArray(value.messages)) {
-        await upsertMessages(col, value);
-      }
-      if (Array.isArray(value.statuses)) {
-        await applyStatuses(col, value);
-      }
+      if (Array.isArray(value.messages)) await upsertMessages(col, value);
+      if (Array.isArray(value.statuses)) await applyStatuses(col, value);
     }
   }
 }
