@@ -23,7 +23,7 @@ async function start() {
 
   // 2) Sockets
   const io = initSockets(server);
-  app.locals.io = io; // make io available in controllers
+  app.locals.io = io; 
 
   // 3) Routes
   app.use(routes);

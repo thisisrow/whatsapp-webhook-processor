@@ -11,22 +11,10 @@ function initSockets(httpServer) {
 
   io.on("connection", (socket) => {
     console.log("⚡ Socket connected:", socket.id);
-
-    const pendingMsgIds = new Set();
-
-    socket.on("message:pending", (msgId) => pendingMsgIds.add(msgId));
-    socket.on("message:received", (msgId) => pendingMsgIds.delete(msgId));
-
-    socket.on("test", (data) => {
-      console.log("🧪 Test event received from client:", data);
-      socket.emit("test_response", { 
-        message: "Hello from backend!", 
-        timestamp: new Date().toISOString(),
-        clientId: socket.id 
-      });
+    
+    socket.on("disconnect", () => {
+      console.log("⚡ Socket disconnected:", socket.id);
     });
-
-    socket.on("disconnect", () => pendingMsgIds.clear());
   });
 
   return io;
