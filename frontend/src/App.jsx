@@ -1,4 +1,4 @@
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/react"
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import io from "socket.io-client";
 import { API_URL, fetchChats, fetchMessages, sendMessage } from "./api";
