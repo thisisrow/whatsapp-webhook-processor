@@ -17,18 +17,17 @@ const server = http.createServer(app);
 const PORT = process.env.PORT;
 
 async function start() {
-  // 1) DB first
   const db = await connectDb();
   console.log(`✅ Connected to MongoDB, DB: ${process.env.DB_NAME}`);
 
-  // 2) Sockets
+  
   const io = initSockets(server);
   app.locals.io = io; 
 
-  // 3) Routes
+  
   app.use(routes);
 
-  // 4) Mongo change stream (optional but kept)
+  
   let changeStream;
   const setupChangeStream = () => {
     try {

@@ -7,18 +7,18 @@ import MessageInput from "./components/MessageInput";
 
 export default function App() {
   const [chats, setChats] = useState([]);
-  const [active, setActive] = useState(null); // waId
+  const [active, setActive] = useState(null); 
   const [messages, setMessages] = useState([]);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
 
-  // keep latest active for socket handlers
+  
   const activeRef = useRef(null);
   useEffect(() => {
     activeRef.current = active;
   }, [active]);
 
-  // ✅ create socket with better connection handling
+  
   const socket = useMemo(() => {
     const newSocket = io(API_URL, {
       autoConnect: true,
@@ -41,35 +41,35 @@ export default function App() {
       setSocketConnected(false);
     });
 
-    // Removed debug-only listeners: message_changed/chat_summary/test_response
-    // (functional handlers are registered below)
+    
+    
 
     return newSocket;
   }, []);
 
-  // realtime: update open thread bubbles
+  
   useEffect(() => {
     const onChanged = (doc) => {
       if (!doc || !doc.waId) return;
 
-      // Handle refresh events
+      
       if (doc._type === "refresh") {
         fetchChats().then(setChats).catch(console.error);
         return;
       }
 
-      // Update messages if this chat is currently open
+      
       if (doc.waId === activeRef.current) {
         setMessages((prev) => {
           const idx = prev.findIndex((m) => m.msgId === doc.msgId);
           if (idx === -1) {
-            // New message - add it and sort
+            
             const newMessages = [...prev, doc].sort(
               (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
             );
             return newMessages;
           } else {
-            // Existing message - update it
+            
             const copy = prev.slice();
             copy[idx] = doc;
             return copy;
@@ -82,13 +82,13 @@ export default function App() {
     return () => socket.off("message_changed", onChanged);
   }, [socket]);
 
-  // realtime: upsert chat summaries so the LEFT LIST updates across tabs
+  
   useEffect(() => {
     const onSummary = (sum) => {
       setChats((prev) => {
         const i = prev.findIndex((c) => c.waId === sum.waId);
         if (i === -1) {
-          // New chat - add it and sort
+          
           const next = [sum, ...prev];
           next.sort(
             (a, b) =>
@@ -96,7 +96,7 @@ export default function App() {
           );
           return next;
         } else {
-          // Existing chat - update it and sort
+          
           const next = prev.slice();
           next[i] = { ...next[i], ...sum };
           next.sort(
@@ -112,10 +112,8 @@ export default function App() {
     return () => socket.off("chat_summary", onSummary);
   }, [socket]);
 
-  // disconnect only when App unmounts
   useEffect(() => () => socket.disconnect(), [socket]);
 
-  // initial chat list
   useEffect(() => {
     fetchChats().then(setChats).catch(console.error);
   }, []);
@@ -138,15 +136,13 @@ export default function App() {
     if (!active || !text.trim()) return;
     try {
       const doc = await sendMessage(active, text.trim());
-      // keep header/list name visible even if API didn't include it
       const name =
         chats.find((c) => c.waId === active)?.contactName || null;
       if (name && !doc.contactName) doc.contactName = name;
 
-      // Add the message locally for immediate feedback
+      
       setMessages((prev) => [...prev, doc]);
 
-      // Refresh chat list to show updated last message
       fetchChats().then(setChats).catch(console.error);
     } catch (e) {
       console.error("Send failed:", e);
@@ -154,7 +150,7 @@ export default function App() {
     }
   }
 
-  // Test function to verify socket connection (no console logs)
+  
   const testSocket = () => {
     if (socket.connected) {
       socket.emit("test", {

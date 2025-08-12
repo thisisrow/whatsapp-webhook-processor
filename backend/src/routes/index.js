@@ -6,6 +6,6 @@ const webhook = require("./webhook.routes");
 const api = express.Router();
 api.use("/api", chats);
 api.use("/api", messages);
-api.use("/", webhook); // webhook often lives at root
+api.use("/", webhook); 
 
 module.exports = api;

@@ -11,7 +11,7 @@ export default function MessageInput({ onSend }) {
     setText("");
   };
 
-  // Enter to send (Shift+Enter for newline)
+  
   const onKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -19,7 +19,7 @@ export default function MessageInput({ onSend }) {
     }
   };
 
-  // simple autoresize
+  
   useEffect(() => {
     const el = taRef.current;
     if (!el) return;

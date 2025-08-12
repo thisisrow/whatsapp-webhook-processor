@@ -9,10 +9,8 @@ async function handleWebhook(req, res) {
 
     await processWebhookPayload(db, req.body);
 
-    // notify clients to refresh
     io.emit("message_changed", { _type: "refresh" });
 
-    // send summaries for chats touched
     for (const id of extractWaIds(req.body)) {
       await emitChatSummary(db, id, io);
     }
