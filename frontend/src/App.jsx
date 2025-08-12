@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next"
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import io from "socket.io-client";
 import { API_URL, fetchChats, fetchMessages, sendMessage } from "./api";
@@ -192,6 +193,7 @@ export default function App() {
           <div className="empty">Select a chat to start</div>
         )}
       </main>
+          <Analytics/>
     </div>
   );
 }
